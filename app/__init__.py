@@ -14,7 +14,7 @@ else:
     print("GPU KHÔNG khả dụng trên hệ thống của bạn! ==> Sử dụng CPU để detect")
     device = torch.device('cpu')  # Thiết lập thiết bị là CPU
 # Khởi tạo modal
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='yolov5/weight/best2.pt').to(device)
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='weight/best2.pt').to(device)
 
 def create_app():
     app = Flask(__name__)
