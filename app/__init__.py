@@ -16,6 +16,7 @@ else:
 # Khởi tạo modal
 model = torch.hub.load('ultralytics/yolov5', 'custom', path='weight/best2.pt').to(device)
 
+
 def create_app():
     app = Flask(__name__)
 
