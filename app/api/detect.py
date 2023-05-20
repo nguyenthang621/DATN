@@ -5,8 +5,7 @@ import cv2
 from .. import model
 
 
-
-@api.route('/detect', methods=['POST'] )
+@api.route('/detect', methods=['POST'])
 def detect():
     fire_list = []
     print(request)
@@ -19,7 +18,7 @@ def detect():
 
         frame = cv2.imread(path_to_save)
 
-        # Nhận diên qua model Yolov6
+        # Nhận diên qua model Yolov5
         results = model(path_to_save)
         pandasResult = results.pandas().xyxy[0]
 
@@ -40,14 +39,16 @@ def detect():
             # Thêm dict vào list
             fire_list.append(fire_dict)
 
-
         del frame
         # return results.pandas().xyxy[0].to_dict()
         # print(fire_list)
         # Chuyển đổi list thành dict
         res = {'fires': fire_list}
         return {
-            'errorCode':0,
-            'data':res
+            'errorCode': 0,
+            'data': res
         }
     return 'Upload file to detect'
+
+
+

@@ -38,6 +38,18 @@ def unsupported_media_type(message):
     return response
 
 
+def not_found(message):
+    response = jsonify({'success': False, 'error': 'Not Found', 'message': message})
+    response.status_code = 404
+    return response
+
+
+def internal_server_error(message):
+    response = jsonify({'success': False, 'error': 'Internal Server Error', 'message': message})
+    response.status_code = 500
+    return response
+
+
 @api.errorhandler(ValidationError)
 def validation_error(e):
     """Method used for validation new data."""
