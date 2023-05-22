@@ -1,27 +1,39 @@
 from flask import Flask
+from flask_socketio import SocketIO, emit
+from spyder_kernels.utils.lazymodules import PIL
+
 from . import configMysql
 from flask_cors import CORS
-import torch
 
 # Kết nối DB
+from .util.utils import base64_to_frame
+from .util.yolov5 import ObjectDetection
+
 db = configMysql.connect()
 
-# Kiểm tra xem GPU có khả dụng không
-if torch.cuda.is_available():
-    print("GPU khả dụng trên hệ thống của bạn!")
-    device = torch.device('cuda')  # Thiết lập thiết bị là GPU
-else:
-    print("GPU KHÔNG khả dụng trên hệ thống của bạn! ==> Sử dụng CPU để detect")
-    device = torch.device('cpu')  # Thiết lập thiết bị là CPU
-# Khởi tạo modal
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='weight/best2.pt').to(device)
+detection = ObjectDetection(model_weights='weight/last.pt')  # Khởi tạo đối tượng detection
+
+app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+
+@socketio.on('detect-video')
+def handle_frame(image_base64):
+    try:
+        frame = base64_to_frame(image_base64)
+        result = detection.get_bounding_boxes(frame)
+        print('result:', result)
+
+        # Gửi lại cho các client khác
+        emit('responseEvent', {'result': result}, broadcast=False)
+    except PIL.UnidentifiedImageError as error:
+        print("Lỗi: Không thể nhận dạng hình ảnh")
+        print(error)
 
 
 def create_app():
-    app = Flask(__name__)
-
     # Apply Flask CORS
-    CORS(app)
+    CORS(app, resources={r"/*": {"origins": "*"}})
     app.config['CORS_HEADERS'] = 'Content-Type'
     app.config['UPLOAD_FOLDER'] = "static"
 

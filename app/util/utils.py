@@ -1,5 +1,9 @@
+import base64
 import json
 import datetime
+
+import cv2
+import numpy as np
 
 
 def convert_json(data):
@@ -23,3 +27,19 @@ def convert_datetime_to_str(dt):
     if dt == None:
         return ''
     return dt.strftime('%d-%m-%Y')
+
+
+def base64_to_frame(image_data):
+    # Loại bỏ tiền tố 'data:image/jpeg;base64,' để lấy dữ liệu base64 thuần túy
+    _, encoded_data = image_data.split(",", 1)
+
+    # Giải mã base64 thành dữ liệu nhị phân
+    decoded_data = base64.b64decode(encoded_data)
+
+    # Chuyển đổi dữ liệu nhị phân thành mảng NumPy
+    np_data = np.frombuffer(decoded_data, np.uint8)
+
+    # Đọc ảnh từ mảng NumPy
+    frame = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
+
+    return frame

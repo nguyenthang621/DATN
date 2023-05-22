@@ -1,54 +1,88 @@
 from . import api
-from flask import request
+from flask import request, jsonify
 import os
 import cv2
-from .. import model
+# from app import model
+#
+#
+# @api.route('/detect', methods=['POST'])
+# def detect():
+#     fire_list = []
+#     print(request)
+#     image = request.files['file']
+#     if image:
+#         # Lưu file
+#         path_to_save = os.path.join('static', image.filename)
+#         print("Save = ", path_to_save)
+#         image.save(path_to_save)  # Save ảnh
+#
+#         frame = cv2.imread(path_to_save)
+#
+#         # Nhận diên qua model Yolov5
+#         results = model(path_to_save)
+#         pandasResult = results.pandas().xyxy[0]
+#
+#         # Duyệt qua từng dòng trong bảng dữ liệu
+#         for index, row in pandasResult.iterrows():
+#             # Tạo dict chứa các giá trị cần thiết
+#             fire_dict = {
+#                 'fire': {
+#                     'xmin': row['xmin'],
+#                     'ymin': row['ymin'],
+#                     'xmax': row['xmax'],
+#                     'ymax': row['ymax'],
+#                     'confidence': row['confidence'],
+#                     'class': row['class']
+#                 }
+#             }
+#
+#             # Thêm dict vào list
+#             fire_list.append(fire_dict)
+#
+#         del frame
+#         # return results.pandas().xyxy[0].to_dict()
+#         # print(fire_list)
+#         # Chuyển đổi list thành dict
+#         res = {'fires': fire_list}
+#         return {
+#             'errorCode': 0,
+#             'data': res
+#         }
+#     return 'Upload file to detect'
+
+
+#
+from app.api.errors import internal_server_error, bad_request
+from app import detection
+
+
+from PIL import Image
+import numpy as np
 
 
 @api.route('/detect', methods=['POST'])
 def detect():
-    fire_list = []
-    print(request)
     image = request.files['file']
-    if image:
-        # Lưu file
-        path_to_save = os.path.join('static', image.filename)
-        print("Save = ", path_to_save)
-        image.save(path_to_save)  # Save ảnh
+    try:
+        if image:
+            # Đọc ảnh từ request
+            img = Image.open(image)
+            #
+            # # Resize ảnh đến kích thước mong muốn
+            # target_size = (640, 480)
+            # img_resized = img.resize(target_size)
 
-        frame = cv2.imread(path_to_save)
+            # Chuyển đổi ảnh thành numpy array
+            frame = np.array(img)
 
-        # Nhận diên qua model Yolov5
-        results = model(path_to_save)
-        pandasResult = results.pandas().xyxy[0]
+            # Nhận diện qua model YOLOv5
+            results = detection.get_bounding_boxes(frame)
 
-        # Duyệt qua từng dòng trong bảng dữ liệu
-        for index, row in pandasResult.iterrows():
-            # Tạo dict chứa các giá trị cần thiết
-            fire_dict = {
-                'fire': {
-                    'xmin': row['xmin'],
-                    'ymin': row['ymin'],
-                    'xmax': row['xmax'],
-                    'ymax': row['ymax'],
-                    'confidence': row['confidence'],
-                    'class': row['class']
-                }
-            }
+            # Xử lý kết quả và trả về dưới dạng JSON
+            # ...
+            return jsonify({'success': True, 'data': {'fires': results}})
 
-            # Thêm dict vào list
-            fire_list.append(fire_dict)
-
-        del frame
-        # return results.pandas().xyxy[0].to_dict()
-        # print(fire_list)
-        # Chuyển đổi list thành dict
-        res = {'fires': fire_list}
-        return {
-            'errorCode': 0,
-            'data': res
-        }
-    return 'Upload file to detect'
-
-
-
+        return bad_request(message='No image')
+    except Exception as error:
+        # Xử lý lỗi chung
+        return internal_server_error(message=str(error))

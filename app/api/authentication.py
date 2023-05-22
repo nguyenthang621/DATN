@@ -11,10 +11,6 @@ from app.util.utils import convert_json
 import jwt
 
 
-@api.route('/', methods=['POST, GET'])
-def home():
-    return jsonify({'message':'home'})
-
 @api.route('/auth/register/', methods=['POST'])
 @validate_json_content_type
 def register():
