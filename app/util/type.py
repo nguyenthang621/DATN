@@ -32,3 +32,7 @@ class User:
             'exp': convert_time(15, 'days')
         }
         return jwt.encode(payload, 'SECRET_KEY', algorithm='HS256')
+
+    def omit_attributes(self, attributes):
+        for attribute in attributes:
+            setattr(self, attribute, None)

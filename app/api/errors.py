@@ -1,7 +1,7 @@
 """This module stores methods for errors while using api."""
 from flask import jsonify
 from app.exceptions import ValidationError
-from . import api
+from app.api import api
 
 
 def bad_request(message, variable=None):
@@ -14,20 +14,20 @@ def bad_request(message, variable=None):
     return response
 
 
-def unauthorized(message):
-    response = jsonify({'error': 'unauthorized', 'message': message, 'success': False})
+def unauthorized(message, form):
+    response = jsonify({'error': 'unauthorized', 'message': message, 'success': False, 'form': form})
     response.status_code = 401
     return response
 
 
-def forbidden(message):
-    response = jsonify({'error': 'forbidden', 'message': message, 'success': False})
+def forbidden(message, form):
+    response = jsonify({'error': 'forbidden', 'message': message, 'success': False, 'form': form})
     response.status_code = 403
     return response
 
 
-def conflict(message):
-    response = jsonify({'error': 'conflict', 'message': message, 'success': False})
+def conflict(message, form):
+    response = jsonify({'error': 'conflict', 'message': message, 'success': False, 'form': form})
     response.status_code = 409
     return response
 
@@ -38,8 +38,8 @@ def unsupported_media_type(message):
     return response
 
 
-def not_found(message):
-    response = jsonify({'success': False, 'error': 'Not Found', 'message': message})
+def not_found(message, form):
+    response = jsonify({'success': False, 'error': 'Not Found', 'message': message, 'form': form})
     response.status_code = 404
     return response
 

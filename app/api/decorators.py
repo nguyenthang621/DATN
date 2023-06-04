@@ -3,7 +3,7 @@ from functools import wraps
 from flask import request, current_app
 import jwt
 from app.api.errors import unauthorized, bad_request, unsupported_media_type, forbidden
-from .. import db
+from app import db
 
 
 def validate_json_content_type(func):

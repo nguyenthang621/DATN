@@ -1,4 +1,6 @@
 from flask import jsonify, request
+from flask_cors import cross_origin
+
 from app.api.decorators import validate_json_content_type
 from app.api.errors import conflict, bad_request, unauthorized, not_found, internal_server_error
 from mysql.connector import Error
@@ -7,11 +9,11 @@ from . import api
 import uuid
 from passlib.hash import pbkdf2_sha256
 from app.util.type import User
-from app.util.utils import convert_json
+from app.util.utils import convert_json, omit_attributes
 import jwt
 
 
-@api.route('/auth/register/', methods=['POST'])
+@api.route('/auth/register', methods=['POST'])
 @validate_json_content_type
 def register():
     args = request.get_json()
@@ -46,9 +48,9 @@ def register():
         p_id = user.id
         token = refresh_token
         cursor.callproc('Proc_user_updateToken', [p_id, token])
-
+        print(user)
         # Trả về kết quả thành công
-        return jsonify({'success': True, 'access_token': access_token, 'refresh_token': refresh_token}), 201
+        return jsonify({'success': True,'data': {'user':omit_attributes(convert_json(user), ['password']), 'access_token': access_token, 'refresh_token': refresh_token}})
     except Error as error:
         # Xử lý lỗi MySQL
         return conflict(message=str(error))
@@ -59,7 +61,7 @@ def register():
         cursor.close()
 
 
-@api.route('/auth/login/', methods=['POST'])
+@api.route('/auth/login', methods=['POST'])
 @validate_json_content_type
 def login():
     args = request.get_json()
@@ -80,10 +82,10 @@ def login():
         user = User(*result.fetchone())
 
         if not user:
-            return not_found(message='Không tồn tại người dùng này.')
+            return not_found(message='Không tồn tại người dùng này.', form='email')
 
         if not pbkdf2_sha256.verify(p_password, user.password):
-            return unauthorized(message='Mật khẩu không đúng.')
+            return unauthorized(message='Mật khẩu không đúng.', form='password')
 
         # Tạo JWT token
         access_token = user.generate_access_token()
@@ -95,11 +97,11 @@ def login():
         cursor.callproc('Proc_user_updateToken', [p_id, token])
 
         return jsonify(
-            {'success': True, 'data': convert_json(user), 'access_token': access_token, 'refresh_token': refresh_token})
+            {'success': True, 'data': {'user':omit_attributes(convert_json(user), ['password']), 'access_token': access_token, 'refresh_token': refresh_token}})
 
     except Error as error:
         # Xử lý lỗi MySQL
-        return conflict(message=str(error))
+        return conflict(message=str(error).split('):')[1], form='email')
     except Exception as error:
         # Xử lý lỗi chung
         return internal_server_error(message=str(error))
@@ -108,6 +110,7 @@ def login():
 
 
 @api.route('/refresh-token', methods=['POST'])
+@validate_json_content_type
 def refresh_token():
     refresh_token = request.json.get('refresh_token')
 
@@ -154,3 +157,18 @@ def refresh_token():
         return internal_server_error(message=str(error))
     finally:
         cursor.close()
+
+
+@api.route('/logout', methods=['POST'])
+def logout():
+    try:
+        return jsonify({'success': True, 'message': 'Đăng xuất thành công'})
+
+    except jwt.ExpiredSignatureError:
+        return unauthorized(message='Token hết hạn.')
+    except jwt.InvalidTokenError:
+        return unauthorized(message='Token không đúng.')
+    except Exception as error:
+        return internal_server_error(message=str(error))
+
+

@@ -19,10 +19,7 @@ def get_users():
         users = mycursor.fetchall()
 
         listUser = [dict(zip([x[0] for x in mycursor.description], row)) for row in users]
-        return {
-            'errorCode': 0,
-            'data': listUser
-        }
+        return jsonify({'success': True, 'data': listUser})
     except Error as e:
         print('error:', e)
         return {
@@ -32,8 +29,8 @@ def get_users():
 
 
 @api.route('/users/<string:user_id>', methods=['GET'])
-@token_required
-def get_current_user(self, user_id):
+# @token_required
+def get_current_user( user_id):
 
     if not user_id:
         return bad_request(message='Thiếu id người dùng.')

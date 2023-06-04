@@ -1,7 +1,9 @@
 import base64
 import json
 import datetime
+from io import BytesIO
 
+from PIL import Image, UnidentifiedImageError
 import cv2
 import numpy as np
 
@@ -43,3 +45,28 @@ def base64_to_frame(image_data):
     frame = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
 
     return frame
+
+
+def omit_attributes(json_data, attributes):
+    if not isinstance(json_data, dict):
+        raise ValueError('Input is not a JSON object')
+
+    # Tạo một bản sao của JSON đầu vào
+    omitted_json = json_data.copy()
+
+    # Loại bỏ các thuộc tính đã chỉ định
+    for attribute in attributes:
+        omitted_json.pop(attribute, None)
+
+    return omitted_json
+
+
+def is_valid_image(image_bytes):
+    try:
+        Image.open(BytesIO(image_bytes))
+        # print("image OK")
+        return True
+    except UnidentifiedImageError:
+        print("image invalid")
+        return False
+
