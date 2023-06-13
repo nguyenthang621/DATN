@@ -14,19 +14,20 @@ def bad_request(message, variable=None):
     return response
 
 
-def unauthorized(message, form):
+def unauthorized(message, form=''):
+
     response = jsonify({'error': 'unauthorized', 'message': message, 'success': False, 'form': form})
     response.status_code = 401
     return response
 
 
-def forbidden(message, form):
+def forbidden(message, form=''):
     response = jsonify({'error': 'forbidden', 'message': message, 'success': False, 'form': form})
     response.status_code = 403
     return response
 
 
-def conflict(message, form):
+def conflict(message, form=''):
     response = jsonify({'error': 'conflict', 'message': message, 'success': False, 'form': form})
     response.status_code = 409
     return response
@@ -38,7 +39,7 @@ def unsupported_media_type(message):
     return response
 
 
-def not_found(message, form):
+def not_found(message, form=''):
     response = jsonify({'success': False, 'error': 'Not Found', 'message': message, 'form': form})
     response.status_code = 404
     return response

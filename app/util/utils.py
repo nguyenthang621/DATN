@@ -70,3 +70,10 @@ def is_valid_image(image_bytes):
         print("image invalid")
         return False
 
+
+def check_keyword(keywords, string):
+    for keyword in keywords:
+        if keyword in string:
+            return keyword
+    return ''
+

@@ -1,4 +1,8 @@
+import base64
 import datetime
+from io import BytesIO
+
+from PIL import Image
 from flask import Flask, request
 from flask_socketio import SocketIO, emit, Namespace, join_room, close_room
 
@@ -25,46 +29,85 @@ def handle_message(message):
     print("Socket Connected >>>")
 
 
-# tạo phòng and start
-@socketio.on("join_room_and_start_video_real_time")
+# tạo phòng and start video real time
+@socketio.on("start_video_real_time")
 def handle_join_room(room):
     # Tham gia vào room
-    print('join_room_and_start_video_real_time:',  room)
+    print('start_video_real_time:',  room)
     socketio.emit(room, 'Joined room')
     join_room(room)
 
 
 # remove room and stop video
-@socketio.on("remove_room_and_stop_video_real_time")
+@socketio.on("stop_video_real_time")
 def handle_join_room(room):
     # Tham gia vào room
-    print('join_room_and_start_video_real_time:',  room)
-    socketio.emit("close_room", 'Closed room')
-    # close_room(room)
+    print('stop_video_real_time:',  room)
+    socketio.emit("stop_video", 'Closed room', room = room)
 
 
 # esp32 join room:
 @socketio.on("join_room_esp32")
 def handle_join_room(data):
     # Tham gia vào room
-    socketio.emit('response_from_esp32', 'ESP32 Joined :)')
+    socketio.emit('response_from_esp32', 'Joined')
     join_room(data['room'])
 
 
 # esp32 join room:
-@socketio.on("close_room_esp32")
+@socketio.on("leave_room_esp32")
 def handle_join_room(data):
     # Tham gia vào room
-    socketio.emit('response_from_esp32', 'ESP32 leave :)')
-    # close_room(data['room'])
+    socketio.emit('response_from_esp32', 'Leave')
 
 
+fps = 0  # Biến lưu trữ số ảnh trong 1 giây
+frame_count = 0  # Biến đếm số ảnh
+last_time = datetime.datetime.now()  # Khởi tạo biến last_time
 # bắt đầu lấy ảnh real time:
 @socketio.on('jpgstream_serverio')
 def handle_binary_data(data):
-    print("nhận được data",datetime.datetime.now())
+    global fps, frame_count, last_time
+    frame_count += 1  # Tăng biến đếm số ảnh
+
     # Gửi dữ liệu xử lý về client
+    #----------------------------------------------------
+
+    #----------------------------------------------------
     socketio.emit('response_data_image', data, room='idCam')
+    # Tính số ảnh trong 1 giây
+    current_time = datetime.datetime.now()
+    elapsed_time = current_time - last_time
+
+    if elapsed_time.total_seconds() >= 1:
+        fps = frame_count
+        frame_count = 0
+        last_time = current_time
+        # Gửi fps về client
+        emit('response_fps', fps, room='idCam')
+
+
+# xử lý control direction:
+@socketio.on('send_direction')
+def handle_binary_data(direction):
+    print("direction: ",direction)
+    # Gửi dữ liệu xử lý về esp32
+    socketio.emit('response_direction_esp32', direction, room='idCam')
+
+
+# Handle data của sensor gửi lên
+@socketio.on('esp32_cam_send_data_sensor')
+def handle_binary_data(data):
+    # print("data sensor: ", data)
+    # Gửi dữ liệu xử lý về client
+    socketio.emit('response_data_sensor_to_client', data, room='idCam')
+
+
+# xử lý change fps:
+@socketio.on('change_fps')
+def handle_binary_data(fps):
+    # Gửi dữ liệu xử lý về esp32
+    socketio.emit('set_fps_esp32', fps, room='idCam')
 
 
 def create_app():

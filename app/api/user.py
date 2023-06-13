@@ -1,7 +1,7 @@
 
 from mysql.connector import Error
-from . import api
-from .. import db
+from app.api import api
+from app import db
 from app.api.decorators import token_required
 from app.api.errors import conflict, bad_request, internal_server_error, not_found
 from app.util.type import User
@@ -10,7 +10,8 @@ from app.util.utils import convert_json, convert_datetime_to_str
 
 
 @api.route('/users', methods=['GET'])
-def get_users():
+@token_required
+def get_users(self):
     try:
         # Tạo cursor để thực hiện truy vấn
         mycursor = db.cursor()
@@ -29,8 +30,8 @@ def get_users():
 
 
 @api.route('/users/<string:user_id>', methods=['GET'])
-# @token_required
-def get_current_user( user_id):
+@token_required
+def get_current_user(self, user_id):
 
     if not user_id:
         return bad_request(message='Thiếu id người dùng.')
@@ -60,7 +61,8 @@ def get_current_user( user_id):
 
 
 @api.route('/users/filter/', methods=['GET'])
-def search_users():
+@token_required
+def search_users(self):
     p_keyword = request.args.get('keyword')
     p_page_size = int(request.args.get('page_size')) if request.args.get('page_size') else 10
     p_page_number = int(request.args.get('page_number')) if request.args.get('page_number') else 1

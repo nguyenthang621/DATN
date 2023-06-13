@@ -36,3 +36,36 @@ class User:
     def omit_attributes(self, attributes):
         for attribute in attributes:
             setattr(self, attribute, None)
+
+
+class Camera:
+    def __init__(self, id, name, ip_address, location=None, createAt=None, user_follow=None):
+        self.id = id
+        self.name = name
+        self.ip_address = ip_address
+        self.location = location
+        self.createAt = convert_datetime_to_str(createAt)
+        self.user_follow = user_follow
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'ip_address': self.ip_address,
+            'location': self.location,
+            'createAt': self.createAt,
+            'user_follow': self.user_follow,
+        }
+
+    def to_dict_get_all_user(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'location': self.location,
+            'createAt': self.createAt
+        }
+
+    def omit_attributes(self, attributes):
+        for attribute in attributes:
+            setattr(self, attribute, None)
+

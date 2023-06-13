@@ -42,9 +42,9 @@ def token_required(func):
         try:
             payload = jwt.decode(token, 'SECRET_KEY', algorithms='HS256')
         except jwt.ExpiredSignatureError:
-            return unauthorized(message='Expired token. Login to get new one')
+            return unauthorized(message='EXPIRED_ACCESS_TOKEN')
         except jwt.InvalidTokenError:
-            return unauthorized(message='Invalid token. Please login or register')
+            return unauthorized(message='INVALID_ACCESS_TOKEN')
         else:
             return func(str(payload['id']), *args, **kwargs)
 

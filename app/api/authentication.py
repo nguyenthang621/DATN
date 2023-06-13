@@ -1,11 +1,9 @@
 from flask import jsonify, request
-from flask_cors import cross_origin
-
 from app.api.decorators import validate_json_content_type
 from app.api.errors import conflict, bad_request, unauthorized, not_found, internal_server_error
 from mysql.connector import Error
-from .. import db
-from . import api
+from app import db
+from app.api import api
 import uuid
 from passlib.hash import pbkdf2_sha256
 from app.util.type import User
@@ -96,6 +94,9 @@ def login():
         token = refresh_token
         cursor.callproc('Proc_user_updateToken', [p_id, token])
 
+        # Lưu thay đổi vào cơ sở dữ liệu
+        db.commit()
+
         return jsonify(
             {'success': True, 'data': {'user':omit_attributes(convert_json(user), ['password']), 'access_token': access_token, 'refresh_token': refresh_token}})
 
@@ -113,14 +114,14 @@ def login():
 @validate_json_content_type
 def refresh_token():
     refresh_token = request.json.get('refresh_token')
-
+    print('refresh_token', refresh_token)
     if not refresh_token:
         return bad_request(message='Thiếu Refresh Token.')
 
     try:
         payload = jwt.decode(refresh_token, 'SECRET_KEY', algorithms=['HS256'])
         id = payload['id']
-        print(id)
+
         if not id:
             return unauthorized(message='Token này không của người dùng nào.')
         cursor = db.cursor()
@@ -145,9 +146,12 @@ def refresh_token():
             token = new_refresh_token
             cursor.callproc('Proc_user_updateToken', [p_id, token])
 
+            # Lưu thay đổi vào cơ sở dữ liệu
+            db.commit()
+
             return jsonify({'success': True, 'access_token': new_access_token, 'refresh_token': new_refresh_token})
         else:
-            return unauthorized(message='Token không đúng.')
+            return unauthorized(message='Token không đúng.', form='REDIRECT_LOGIN')
 
     except jwt.ExpiredSignatureError:
         return unauthorized(message='Token hết hạn.')
